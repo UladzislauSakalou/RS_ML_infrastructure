@@ -30,18 +30,24 @@ from .pipeline import create_pipeline
     default=0.2,
     type=click.FloatRange(0, 1, min_open=True, max_open=True),
 )
+@click.option(
+    "--use-scaler",
+    default=True,
+    type=bool,
+)
 def train(
     dataset_path: Path,
     save_model_path: Path,
     random_state: int,
-    test_split_ratio: float
+    test_split_ratio: float,
+    use_scaler: bool
 ):
     features_train, features_val, target_train, target_val = get_dataset(
         dataset_path,
         random_state,
         test_split_ratio
     )
-    pipeline = create_pipeline(random_state=random_state).fit(features_train, target_train)
+    pipeline = create_pipeline(use_scaler=use_scaler, random_state=random_state).fit(features_train, target_train)
     accuracy = accuracy_score(target_val, pipeline.predict(features_val))
     click.echo(f"Accuracy: {accuracy}.")
     dump(pipeline, save_model_path)
