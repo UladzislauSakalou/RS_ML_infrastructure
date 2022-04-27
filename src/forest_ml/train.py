@@ -21,15 +21,24 @@ from joblib import dump
     default="data/model.joblib",
     type=click.Path(dir_okay=False, writable=True, path_type=Path)
 )
-def train(dataset_path: Path, save_model_path: Path):
+@click.option(
+    "--random-state",
+    default=42,
+    type=int
+)
+def train(
+    dataset_path: Path,
+    save_model_path: Path,
+    random_state: int
+):
     dataset = pd.read_csv(dataset_path)
     click.echo(f"Dataset shape: {dataset.shape}.")
     features = dataset.drop('Cover_Type', axis=1)
     target = dataset['Cover_Type']
     features_train, features_val, target_train, target_val = train_test_split(
-        features, target, test_size=0.2, random_state=42
+        features, target, test_size=0.2, random_state=random_state
     )
-    classifier = RandomForestClassifier(random_state=42).fit(features_train, target_train)
+    classifier = RandomForestClassifier(random_state=random_state).fit(features_train, target_train)
     accuracy = accuracy_score(target_val, classifier.predict(features_val))
     click.echo(f"Accuracy: {accuracy}.")
     dump(classifier, save_model_path)
