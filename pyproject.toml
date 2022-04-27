@@ -1,11 +1,14 @@
 [tool.poetry]
-name = "rs_9_evaluation_selection"
+name = "forest_ml"
 version = "0.1.0"
-description = ""
+description = "Final project for ML course of RS school"
 authors = ["Uladzislau Sakalou"]
+license = "MIT"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
+click = "^8.1.2"
 
 [tool.poetry.dev-dependencies]
 
