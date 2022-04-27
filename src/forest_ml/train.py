@@ -1,10 +1,9 @@
 from pathlib import Path
-import pandas as pd
 import click
 from sklearn.metrics import accuracy_score
-from sklearn.ensemble import RandomForestClassifier
 from joblib import dump
 from .data import get_dataset
+from .pipeline import create_pipeline
 
 
 @click.command()
@@ -42,8 +41,8 @@ def train(
         random_state,
         test_split_ratio
     )
-    classifier = RandomForestClassifier(random_state=random_state).fit(features_train, target_train)
-    accuracy = accuracy_score(target_val, classifier.predict(features_val))
+    pipeline = create_pipeline(random_state=random_state).fit(features_train, target_train)
+    accuracy = accuracy_score(target_val, pipeline.predict(features_val))
     click.echo(f"Accuracy: {accuracy}.")
-    dump(classifier, save_model_path)
+    dump(pipeline, save_model_path)
     click.echo(f"Model is saved to {save_model_path}.")
