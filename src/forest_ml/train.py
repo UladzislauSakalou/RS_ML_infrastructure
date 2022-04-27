@@ -2,9 +2,9 @@ from pathlib import Path
 import pandas as pd
 import click
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from joblib import dump
+from .data import get_dataset
 
 
 @click.command()
@@ -37,12 +37,10 @@ def train(
     random_state: int,
     test_split_ratio: float
 ):
-    dataset = pd.read_csv(dataset_path)
-    click.echo(f"Dataset shape: {dataset.shape}.")
-    features = dataset.drop('Cover_Type', axis=1)
-    target = dataset['Cover_Type']
-    features_train, features_val, target_train, target_val = train_test_split(
-        features, target, test_size=test_split_ratio, random_state=random_state
+    features_train, features_val, target_train, target_val = get_dataset(
+        dataset_path,
+        random_state,
+        test_split_ratio
     )
     classifier = RandomForestClassifier(random_state=random_state).fit(features_train, target_train)
     accuracy = accuracy_score(target_val, classifier.predict(features_val))
