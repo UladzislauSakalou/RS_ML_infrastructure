@@ -1,9 +1,9 @@
 from pathlib import Path
 import click
-from sklearn.metrics import accuracy_score, f1_score
 from joblib import dump
 from .data import get_dataset
 from .pipeline import create_pipeline
+from sklearn.model_selection import KFold, cross_val_score
 import mlflow
 
 
@@ -32,10 +32,10 @@ import mlflow
     show_default=True
 )
 @click.option(
-    "--test-split-ratio",
-    default=0.2,
-    type=click.FloatRange(0, 1, min_open=True, max_open=True),
-    help='Test split ratio',
+    "--n-splits",
+    default=5,
+    type=int,
+    help='n splits for cross validation',
     show_default=True
 )
 @click.option(
@@ -49,25 +49,24 @@ def train(
     dataset_path: Path,
     save_model_path: Path,
     random_state: int,
-    test_split_ratio: float,
+    n_splits: int,
     use_scaler: bool
 ):
-    features_train, features_val, target_train, target_val = get_dataset(
-        dataset_path,
-        random_state,
-        test_split_ratio
-    )
+    features, target = get_dataset(dataset_path)
+    
     with mlflow.start_run():
-        pipeline = create_pipeline(use_scaler=use_scaler, random_state=random_state).fit(features_train, target_train)
-        accuracy = accuracy_score(target_val, pipeline.predict(features_val))
-        macro_averaged_f1 = f1_score(target_val, pipeline.predict(features_val), average = 'macro')
-        micro_averaged_f1 = f1_score(target_val, pipeline.predict(features_val), average = 'micro')
+        pipeline = create_pipeline(use_scaler=use_scaler, random_state=random_state)
+        k_fold = KFold(n_splits=n_splits, shuffle=True, random_state=42)
+        accuracy = cross_val_score(pipeline, features, target, cv=k_fold, scoring='accuracy').mean()
+        micro_averaged_f1 = cross_val_score(pipeline, features, target, cv=k_fold, scoring='f1_micro').mean()
+        macro_averaged_f1 = cross_val_score(pipeline, features, target, cv=k_fold, scoring='f1_macro').mean()
         mlflow.log_param("use_scaler", use_scaler)
         mlflow.log_metric("accuracy", accuracy)
-        mlflow.log_metric("macro_averaged_f1", macro_averaged_f1)
         mlflow.log_metric("micro_averaged_f1", micro_averaged_f1)
+        mlflow.log_metric("macro_averaged_f1", macro_averaged_f1)
         click.echo(f"Accuracy: {accuracy}.")
-        click.echo(f"macro_averaged_f1: {macro_averaged_f1}.")
         click.echo(f"micro_averaged_f1: {micro_averaged_f1}.")
+        click.echo(f"macro_averaged_f1: {macro_averaged_f1}.")
+        pipeline.fit(features, target)
         dump(pipeline, save_model_path)
         click.echo(f"Model is saved to {save_model_path}.")
