@@ -4,6 +4,7 @@ from sklearn.metrics import accuracy_score
 from joblib import dump
 from .data import get_dataset
 from .pipeline import create_pipeline
+import mlflow
 
 
 @click.command()
@@ -47,8 +48,11 @@ def train(
         random_state,
         test_split_ratio
     )
-    pipeline = create_pipeline(use_scaler=use_scaler, random_state=random_state).fit(features_train, target_train)
-    accuracy = accuracy_score(target_val, pipeline.predict(features_val))
-    click.echo(f"Accuracy: {accuracy}.")
-    dump(pipeline, save_model_path)
-    click.echo(f"Model is saved to {save_model_path}.")
+    with mlflow.start_run():
+        pipeline = create_pipeline(use_scaler=use_scaler, random_state=random_state).fit(features_train, target_train)
+        accuracy = accuracy_score(target_val, pipeline.predict(features_val))
+        mlflow.log_param("use_scaler", use_scaler)
+        mlflow.log_metric("accuracy", accuracy)
+        click.echo(f"Accuracy: {accuracy}.")
+        dump(pipeline, save_model_path)
+        click.echo(f"Model is saved to {save_model_path}.")
