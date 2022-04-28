@@ -1,6 +1,6 @@
 from pathlib import Path
 import click
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 from joblib import dump
 from .data import get_dataset
 from .pipeline import create_pipeline
@@ -60,8 +60,14 @@ def train(
     with mlflow.start_run():
         pipeline = create_pipeline(use_scaler=use_scaler, random_state=random_state).fit(features_train, target_train)
         accuracy = accuracy_score(target_val, pipeline.predict(features_val))
+        macro_averaged_f1 = f1_score(target_val, pipeline.predict(features_val), average = 'macro')
+        micro_averaged_f1 = f1_score(target_val, pipeline.predict(features_val), average = 'micro')
         mlflow.log_param("use_scaler", use_scaler)
         mlflow.log_metric("accuracy", accuracy)
+        mlflow.log_metric("macro_averaged_f1", macro_averaged_f1)
+        mlflow.log_metric("micro_averaged_f1", micro_averaged_f1)
         click.echo(f"Accuracy: {accuracy}.")
+        click.echo(f"macro_averaged_f1: {macro_averaged_f1}.")
+        click.echo(f"micro_averaged_f1: {micro_averaged_f1}.")
         dump(pipeline, save_model_path)
         click.echo(f"Model is saved to {save_model_path}.")
