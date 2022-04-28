@@ -45,17 +45,65 @@ import mlflow
     help='flag to use scaler for dataset',
     show_default=True
 )
+@click.option(
+    "--n-estimators",
+    default=100,
+    type=int,
+    help='The number of trees in the Random forest.',
+    show_default=True
+)
+@click.option(
+    "--criterion",
+    default='gini',
+    type=click.Choice(['gini', 'entropy']),
+    help='The function to measure the quality of a split. Supported criteria are “gini” for the Gini impurity and “entropy” for the information gain.',
+    show_default=True
+)
+@click.option(
+    "--max-depth",
+    default=None,
+    type=int,
+    help='The maximum depth of the tree. If None, then nodes are expanded until all leaves are pure or until all leaves contain less than min_samples_split samples.',
+    show_default=True
+)
+@click.option(
+    "--min-samples-split",
+    default=2,
+    type=int,
+    help='The minimum number of samples required to split an internal node.',
+    show_default=True
+)
+@click.option(
+    "--min-samples-leaf",
+    default=1,
+    type=int,
+    help='The minimum number of samples required to be at a leaf node.',
+    show_default=True
+)
 def train(
     dataset_path: Path,
     save_model_path: Path,
     random_state: int,
     n_splits: int,
-    use_scaler: bool
+    use_scaler: bool,
+    n_estimators: int,
+    criterion: str,
+    max_depth: int,
+    min_samples_split: int,
+    min_samples_leaf: int
 ):
     features, target = get_dataset(dataset_path)
     
     with mlflow.start_run():
-        pipeline = create_pipeline(use_scaler=use_scaler, random_state=random_state)
+        pipeline = create_pipeline(
+            use_scaler=use_scaler,
+            random_state=random_state,
+            n_estimators=n_estimators,
+            criterion=criterion,
+            max_depth=max_depth,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf
+        )
         k_fold = KFold(n_splits=n_splits, shuffle=True, random_state=42)
         accuracy = cross_val_score(pipeline, features, target, cv=k_fold, scoring='accuracy').mean()
         micro_averaged_f1 = cross_val_score(pipeline, features, target, cv=k_fold, scoring='f1_micro').mean()
