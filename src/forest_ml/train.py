@@ -12,29 +12,38 @@ import mlflow
     '-d',
     '--dataset_path',
     default='data/train.csv',
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
     help='Path to the dataset',
-    type=click.Path(exists=True, dir_okay=False, path_type=Path)
+    show_default=True
 )
 @click.option(
     "-s",
     "--save-model-path",
     default="data/model.joblib",
-    type=click.Path(dir_okay=False, writable=True, path_type=Path)
+    type=click.Path(dir_okay=False, writable=True, path_type=Path),
+    help='Path to the model to save',
+    show_default=True
 )
 @click.option(
     "--random-state",
     default=42,
-    type=int
+    type=int,
+    help='Random state',
+    show_default=True
 )
 @click.option(
     "--test-split-ratio",
     default=0.2,
     type=click.FloatRange(0, 1, min_open=True, max_open=True),
+    help='Test split ratio',
+    show_default=True
 )
 @click.option(
     "--use-scaler",
     default=True,
     type=bool,
+    help='flag to use scaler for dataset',
+    show_default=True
 )
 def train(
     dataset_path: Path,
