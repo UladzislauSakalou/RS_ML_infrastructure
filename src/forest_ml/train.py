@@ -25,6 +25,13 @@ import mlflow
     show_default=True
 )
 @click.option(
+    "--model-name",
+    default='rf',
+    type=click.Choice(['rf', 'lr']),
+    help='Model for evaluation',
+    show_default=True
+)
+@click.option(
     "--random-state",
     default=42,
     type=int,
@@ -80,9 +87,31 @@ import mlflow
     help='The minimum number of samples required to be at a leaf node.',
     show_default=True
 )
+@click.option(
+    "--logreg-c",
+    default=1,
+    type=float,
+    help='Regularization coefficisnt of Logistic regression',
+    show_default=True
+)
+@click.option(
+    "--penalty",
+    default='l2',
+    type=click.Choice(['l1', 'l2']),
+    help='Regularization type for Logistic regression',
+    show_default=True
+)
+@click.option(
+    "--max-iter",
+    default=100,
+    type=int,
+    help='Max num of iterations for Logistic regression.',
+    show_default=True
+)
 def train(
     dataset_path: Path,
     save_model_path: Path,
+    model_name: str,
     random_state: int,
     n_splits: int,
     use_scaler: bool,
@@ -90,25 +119,50 @@ def train(
     criterion: str,
     max_depth: int,
     min_samples_split: int,
-    min_samples_leaf: int
+    min_samples_leaf: int,
+    logreg_c: float,
+    penalty: str,
+    max_iter: int
 ):
     features, target = get_dataset(dataset_path)
     
     with mlflow.start_run():
         pipeline = create_pipeline(
+            model_name=model_name,
             use_scaler=use_scaler,
             random_state=random_state,
             n_estimators=n_estimators,
             criterion=criterion,
             max_depth=max_depth,
             min_samples_split=min_samples_split,
-            min_samples_leaf=min_samples_leaf
+            min_samples_leaf=min_samples_leaf,
+            logreg_c=logreg_c,
+            penalty=penalty,
+            max_iter=max_iter
         )
         k_fold = KFold(n_splits=n_splits, shuffle=True, random_state=42)
         accuracy = cross_val_score(pipeline, features, target, cv=k_fold, scoring='accuracy').mean()
         micro_averaged_f1 = cross_val_score(pipeline, features, target, cv=k_fold, scoring='f1_micro').mean()
         macro_averaged_f1 = cross_val_score(pipeline, features, target, cv=k_fold, scoring='f1_macro').mean()
         mlflow.log_param("use_scaler", use_scaler)
+        mlflow.log_param("model_name", model_name)
+        mlflow.log_param("n_splits", n_splits)
+        
+        
+        if model_name == 'rf':
+            mlflow.log_params({
+                'n_estimators': n_estimators,
+                'criterion': criterion,
+                'max_depth': max_depth,
+                'min_samples_split': min_samples_split,
+                'min_samples_leaf': min_samples_leaf
+            })
+        if model_name == 'lr':
+            mlflow.log_params({
+                'logreg_c': logreg_c,
+                'penalty': penalty,
+                'max-iter': max_iter
+            })
         mlflow.log_metric("accuracy", accuracy)
         mlflow.log_metric("micro_averaged_f1", micro_averaged_f1)
         mlflow.log_metric("macro_averaged_f1", macro_averaged_f1)
