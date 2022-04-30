@@ -53,6 +53,13 @@ import mlflow
     show_default=True
 )
 @click.option(
+    "--use-boruta",
+    default=True,
+    type=bool,
+    help='flag to use boruta feature selection algorithm',
+    show_default=True
+)
+@click.option(
     "--n-estimators",
     default=100,
     type=int,
@@ -115,6 +122,7 @@ def train(
     random_state: int,
     n_splits: int,
     use_scaler: bool,
+    use_boruta: bool,
     n_estimators: int,
     criterion: str,
     max_depth: int,
@@ -130,6 +138,7 @@ def train(
         pipeline = create_pipeline(
             model_name=model_name,
             use_scaler=use_scaler,
+            use_boruta=use_boruta,
             random_state=random_state,
             n_estimators=n_estimators,
             criterion=criterion,
