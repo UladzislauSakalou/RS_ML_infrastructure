@@ -3,8 +3,9 @@ import click
 from joblib import dump
 from .data import get_dataset
 from .pipeline import create_pipeline
-from sklearn.model_selection import KFold, cross_val_score
+from sklearn.model_selection import KFold, cross_val_score, GridSearchCV
 import mlflow
+import numpy as np
 
 
 @click.command()
@@ -59,62 +60,6 @@ import mlflow
     help='flag to use boruta feature selection algorithm',
     show_default=True
 )
-@click.option(
-    "--n-estimators",
-    default=100,
-    type=int,
-    help='The number of trees in the Random forest.',
-    show_default=True
-)
-@click.option(
-    "--criterion",
-    default='gini',
-    type=click.Choice(['gini', 'entropy']),
-    help='The function to measure the quality of a split. Supported criteria are “gini” for the Gini impurity and “entropy” for the information gain.',
-    show_default=True
-)
-@click.option(
-    "--max-depth",
-    default=None,
-    type=int,
-    help='The maximum depth of the tree. If None, then nodes are expanded until all leaves are pure or until all leaves contain less than min_samples_split samples.',
-    show_default=True
-)
-@click.option(
-    "--min-samples-split",
-    default=2,
-    type=int,
-    help='The minimum number of samples required to split an internal node.',
-    show_default=True
-)
-@click.option(
-    "--min-samples-leaf",
-    default=1,
-    type=int,
-    help='The minimum number of samples required to be at a leaf node.',
-    show_default=True
-)
-@click.option(
-    "--logreg-c",
-    default=1,
-    type=float,
-    help='Regularization coefficisnt of Logistic regression',
-    show_default=True
-)
-@click.option(
-    "--penalty",
-    default='l2',
-    type=click.Choice(['l1', 'l2']),
-    help='Regularization type for Logistic regression',
-    show_default=True
-)
-@click.option(
-    "--max-iter",
-    default=100,
-    type=int,
-    help='Max num of iterations for Logistic regression.',
-    show_default=True
-)
 def train(
     dataset_path: Path,
     save_model_path: Path,
@@ -122,15 +67,7 @@ def train(
     random_state: int,
     n_splits: int,
     use_scaler: bool,
-    use_boruta: bool,
-    n_estimators: int,
-    criterion: str,
-    max_depth: int,
-    min_samples_split: int,
-    min_samples_leaf: int,
-    logreg_c: float,
-    penalty: str,
-    max_iter: int
+    use_boruta: bool
 ):
     features, target = get_dataset(dataset_path)
     
@@ -139,46 +76,58 @@ def train(
             model_name=model_name,
             use_scaler=use_scaler,
             use_boruta=use_boruta,
-            random_state=random_state,
-            n_estimators=n_estimators,
-            criterion=criterion,
-            max_depth=max_depth,
-            min_samples_split=min_samples_split,
-            min_samples_leaf=min_samples_leaf,
-            logreg_c=logreg_c,
-            penalty=penalty,
-            max_iter=max_iter
+            random_state=random_state
         )
-        k_fold = KFold(n_splits=n_splits, shuffle=True, random_state=42)
-        accuracy = cross_val_score(pipeline, features, target, cv=k_fold, scoring='accuracy').mean()
-        micro_averaged_f1 = cross_val_score(pipeline, features, target, cv=k_fold, scoring='f1_micro').mean()
-        macro_averaged_f1 = cross_val_score(pipeline, features, target, cv=k_fold, scoring='f1_macro').mean()
+        
+        accuracy = nestedCV(model_name, pipeline, features, target, scoring='accuracy', n=n_splits)
+        micro_averaged_f1 = nestedCV(model_name, pipeline, features, target, scoring='f1_micro', n=n_splits)
+        macro_averaged_f1 = nestedCV(model_name, pipeline, features, target, scoring='f1_macro', n=n_splits)
+        
         mlflow.log_param("use_scaler", use_scaler)
         mlflow.log_param("use_boruta", use_boruta)
         mlflow.log_param("model_name", model_name)
-        mlflow.log_param("n_splits", n_splits)
         
-        
-        if model_name == 'rf':
-            mlflow.log_params({
-                'n_estimators': n_estimators,
-                'criterion': criterion,
-                'max_depth': max_depth,
-                'min_samples_split': min_samples_split,
-                'min_samples_leaf': min_samples_leaf
-            })
-        if model_name == 'lr':
-            mlflow.log_params({
-                'logreg_c': logreg_c,
-                'penalty': penalty,
-                'max-iter': max_iter
-            })
+        model = get_tuned_model(model_name, pipeline, features, target, n=n_splits)
         mlflow.log_metric("accuracy", accuracy)
         mlflow.log_metric("micro_averaged_f1", micro_averaged_f1)
         mlflow.log_metric("macro_averaged_f1", macro_averaged_f1)
         click.echo(f"Accuracy: {accuracy}.")
         click.echo(f"micro_averaged_f1: {micro_averaged_f1}.")
         click.echo(f"macro_averaged_f1: {macro_averaged_f1}.")
-        pipeline.fit(features, target)
-        dump(pipeline, save_model_path)
+        
+        dump(model, save_model_path)
         click.echo(f"Model is saved to {save_model_path}.")
+        
+def nestedCV(model_name, pipeline, features, target, scoring, n=5, k=2): 
+    cv_inner = KFold(n_splits=k, shuffle=True, random_state=4)
+    param_grid = dict()
+    if model_name == 'rf':
+        param_grid['classifier__n_estimators'] = [50, 100, 200]
+        param_grid['classifier__criterion'] = ['gini', 'entropy']
+        param_grid['classifier__max_depth'] = [None, 5, 10]
+        param_grid['classifier__min_samples_split'] = [2, 4]
+        param_grid['classifier__min_samples_leaf'] = [2, 4]
+    elif model_name == 'lr':
+        param_grid['classifier__C'] = [0.1, 1, 10]
+        param_grid['classifier__max_iter'] = [100, 500]
+    search = GridSearchCV(pipeline, param_grid, scoring=scoring, n_jobs=-1, cv=cv_inner, refit=True)
+    cv_outer = KFold(n_splits=n, shuffle=True, random_state=4)
+    scores = cross_val_score(search, features, target, scoring=scoring, cv=cv_outer, n_jobs=-1)
+    return np.mean(scores)
+
+def get_tuned_model(model_name, pipeline, features, target, scoring='accuracy', n_splits=5):
+    k_fold = KFold(n_splits=n_splits, shuffle=True, random_state=42)
+    param_grid = dict()
+    if model_name == 'rf':
+        param_grid['classifier__n_estimators'] = [50, 100, 200]
+        param_grid['classifier__criterion'] = ['gini', 'entropy']
+        param_grid['classifier__max_depth'] = [None, 5, 10]
+        param_grid['classifier__min_samples_split'] = [2, 4]
+        param_grid['classifier__min_samples_leaf'] = [2, 4]
+    elif model_name == 'lr':
+        param_grid['classifier__C'] = [0.1, 1, 10]
+        param_grid['classifier__max_iter'] = [100, 500]    
+    search = GridSearchCV(pipeline, param_grid, scoring=scoring, n_jobs=-1, cv=k_fold, refit=True)
+    search.fit(features, target)
+    mlflow.log_params(search.best_params_)
+    return search.best_estimator_
