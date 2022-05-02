@@ -154,6 +154,7 @@ def train(
         micro_averaged_f1 = cross_val_score(pipeline, features, target, cv=k_fold, scoring='f1_micro').mean()
         macro_averaged_f1 = cross_val_score(pipeline, features, target, cv=k_fold, scoring='f1_macro').mean()
         mlflow.log_param("use_scaler", use_scaler)
+        mlflow.log_param("use_boruta", use_boruta)
         mlflow.log_param("model_name", model_name)
         mlflow.log_param("n_splits", n_splits)
         
