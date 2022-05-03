@@ -32,7 +32,7 @@ import mlflow
     show_default=True,
 )
 @click.option(
-    "--random-state", default=42, type=int, help="Random state", show_default=True
+    "--random-state", default=4, type=int, help="Random state", show_default=True
 )
 @click.option(
     "--n-splits",
@@ -67,43 +67,42 @@ def train(
     features, target = get_dataset(dataset_path)
 
     with mlflow.start_run():
-        pipeline = create_pipeline(
-            model_name=model_name,
-            use_scaler=use_scaler,
-            use_boruta=use_boruta,
-            random_state=random_state,
-        )
+        pipeline = create_pipeline(use_scaler=use_scaler, use_boruta=use_boruta)
+        features = pipeline.fit_transform(features)
 
         accuracy = nestedCV(
             model_name,
-            pipeline,
             features,
             target,
+            random_state,
             scoring="accuracy",
             n_splits=n_splits,
         )
+
         micro_averaged_f1 = nestedCV(
             model_name,
-            pipeline,
             features,
             target,
+            random_state,
             scoring="f1_micro",
             n_splits=n_splits,
         )
+
         macro_averaged_f1 = nestedCV(
             model_name,
-            pipeline,
             features,
             target,
+            random_state,
             scoring="f1_macro",
             n_splits=n_splits,
         )
+
         mlflow.log_metric("accuracy", accuracy)
         mlflow.log_metric("micro_averaged_f1", micro_averaged_f1)
         mlflow.log_metric("macro_averaged_f1", macro_averaged_f1)
 
         model = get_tuned_model(
-            model_name, pipeline, features, target, n_splits=n_splits
+            model_name, features, target, random_state, n_splits=n_splits
         )
         mlflow.log_param("use_scaler", use_scaler)
         mlflow.log_param("use_boruta", use_boruta)

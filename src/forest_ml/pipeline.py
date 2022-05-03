@@ -1,14 +1,11 @@
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
 from sklearn.compose import ColumnTransformer
 from boruta import BorutaPy
 
 
-def create_pipeline(
-    model_name: str, use_scaler: bool, use_boruta: bool, random_state: int
-) -> Pipeline:
+def create_pipeline(use_scaler: bool, use_boruta: bool) -> Pipeline:
     pipeline_steps = []
     if use_scaler:
         pipeline_steps.append(
@@ -20,6 +17,7 @@ def create_pipeline(
                 ),
             )
         )
+
     if use_boruta:
         pipeline_steps.append(
             (
@@ -27,17 +25,9 @@ def create_pipeline(
                 BorutaPy(
                     RandomForestClassifier(random_state=42, max_depth=13),
                     n_estimators="auto",
-                    random_state=42,
+                    random_state=4,
                 ),
             )
-        )
-    if model_name == "rf":
-        pipeline_steps.append(
-            ("classifier", RandomForestClassifier(random_state=random_state))
-        )
-    elif model_name == "lr":
-        pipeline_steps.append(
-            ("classifier", LogisticRegression(random_state=random_state))
         )
     return Pipeline(steps=pipeline_steps)
 
