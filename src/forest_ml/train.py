@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 import click
 from joblib import dump
 from .data import get_dataset
@@ -6,6 +7,8 @@ from .pipeline import create_pipeline
 from sklearn.model_selection import KFold, cross_val_score, GridSearchCV
 import mlflow
 import numpy as np
+import pandas as pd
+from sklearn.pipeline import Pipeline
 
 
 @click.command()
@@ -117,7 +120,15 @@ def train(
         click.echo(f"Model is saved to {save_model_path}.")
 
 
-def nestedCV(model_name, pipeline, features, target, scoring, n_splits=5, k_splits=2):
+def nestedCV(
+    model_name: str,
+    pipeline: Pipeline,
+    features: pd.DataFrame,
+    target: pd.Series,
+    scoring: str,
+    n_splits: int = 5,
+    k_splits: int = 2,
+) -> float:
     cv_inner = KFold(n_splits=k_splits, shuffle=True, random_state=4)
     param_grid = get_param_grid(model_name)
     search = GridSearchCV(
@@ -131,7 +142,12 @@ def nestedCV(model_name, pipeline, features, target, scoring, n_splits=5, k_spli
 
 
 def get_tuned_model(
-    model_name, pipeline, features, target, scoring="accuracy", n_splits=5
+    model_name: str,
+    pipeline: Pipeline,
+    features: pd.DataFrame,
+    target: pd.Series,
+    scoring: str = "accuracy",
+    n_splits: int = 5,
 ):
     k_fold = KFold(n_splits=n_splits, shuffle=True, random_state=42)
     param_grid = get_param_grid(model_name)
@@ -143,8 +159,8 @@ def get_tuned_model(
     return search.best_estimator_
 
 
-def get_param_grid(model_name):
-    param_grid = dict()
+def get_param_grid(model_name: str):
+    param_grid: dict[str, Any] = dict()
     if model_name == "rf":
         param_grid["classifier__n_estimators"] = [50, 100, 200]
         param_grid["classifier__criterion"] = ["gini", "entropy"]
