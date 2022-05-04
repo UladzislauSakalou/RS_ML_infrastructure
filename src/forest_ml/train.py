@@ -10,7 +10,7 @@ import mlflow
 @click.command()
 @click.option(
     "-d",
-    "--dataset_path",
+    "--dataset-path",
     default="data/train.csv",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     help="Path to the dataset",
@@ -35,13 +35,6 @@ import mlflow
     "--random-state", default=4, type=int, help="Random state", show_default=True
 )
 @click.option(
-    "--n-splits",
-    default=5,
-    type=int,
-    help="n splits for cross validation",
-    show_default=True,
-)
-@click.option(
     "--use-scaler",
     default=True,
     type=bool,
@@ -60,7 +53,6 @@ def train(
     save_model_path: Path,
     model_name: str,
     random_state: int,
-    n_splits: int,
     use_scaler: bool,
     use_boruta: bool,
 ):
@@ -71,39 +63,22 @@ def train(
         features = pipeline.fit_transform(features)
 
         accuracy = nestedCV(
-            model_name,
-            features,
-            target,
-            random_state,
-            scoring="accuracy",
-            n_splits=n_splits,
+            model_name, features, target, random_state, scoring="accuracy"
         )
 
         micro_averaged_f1 = nestedCV(
-            model_name,
-            features,
-            target,
-            random_state,
-            scoring="f1_micro",
-            n_splits=n_splits,
+            model_name, features, target, random_state, scoring="f1_micro"
         )
 
         macro_averaged_f1 = nestedCV(
-            model_name,
-            features,
-            target,
-            random_state,
-            scoring="f1_macro",
-            n_splits=n_splits,
+            model_name, features, target, random_state, scoring="f1_macro"
         )
 
         mlflow.log_metric("accuracy", accuracy)
         mlflow.log_metric("micro_averaged_f1", micro_averaged_f1)
         mlflow.log_metric("macro_averaged_f1", macro_averaged_f1)
 
-        model = get_tuned_model(
-            model_name, features, target, random_state, n_splits=n_splits
-        )
+        model = get_tuned_model(model_name, features, target, random_state)
         mlflow.log_param("use_scaler", use_scaler)
         mlflow.log_param("use_boruta", use_boruta)
         mlflow.log_param("model_name", model_name)
