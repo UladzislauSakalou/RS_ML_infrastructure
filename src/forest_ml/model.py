@@ -5,6 +5,8 @@ import mlflow
 from typing import Any
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+from joblib import dump
+import click
 
 
 def nestedCV(
@@ -58,7 +60,7 @@ def get_model(model_name: str, random_state: int) -> Any:
 def get_param_grid(model_name: str):
     param_grid: dict[str, Any] = dict()
     if model_name == "rf":
-        param_grid["n_estimators"] = [50, 100, 200]
+        param_grid["n_estimators"] = [100, 200]
         param_grid["criterion"] = ["gini", "entropy"]
         param_grid["max_depth"] = [None, 5, 10]
         param_grid["min_samples_split"] = [2, 4]
@@ -67,3 +69,8 @@ def get_param_grid(model_name: str):
         param_grid["C"] = [0.1, 1, 10]
         param_grid["max_iter"] = [100, 500]
     return param_grid
+
+
+def save_model(model: Any, save_model_path: str) -> None:
+    dump(model, save_model_path)
+    click.echo(f"Model is saved to {save_model_path}.")

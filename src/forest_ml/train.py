@@ -1,9 +1,8 @@
 from pathlib import Path
 import click
-from joblib import dump
 from .data import get_dataset
 from .pipeline import create_pipeline
-from .model import nestedCV, get_tuned_model
+from .model import nestedCV, get_tuned_model, save_model
 import mlflow
 
 
@@ -86,5 +85,4 @@ def train(
         click.echo(f"micro_averaged_f1: {micro_averaged_f1}.")
         click.echo(f"macro_averaged_f1: {macro_averaged_f1}.")
 
-        dump(model, save_model_path)
-        click.echo(f"Model is saved to {save_model_path}.")
+        save_model(model, save_model_path)
