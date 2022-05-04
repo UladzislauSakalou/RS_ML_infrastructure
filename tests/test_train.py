@@ -1,7 +1,7 @@
 from typing import Any
 from click.testing import CliRunner
 import pytest
-from .test_helper import generate_fake_data
+from test_helper import generate_fake_data
 from forest_ml.train import train
 from joblib import load
 import numpy as np
