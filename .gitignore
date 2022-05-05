@@ -2,3 +2,4 @@ data
 mlruns
 __pycache__
 .nox
+.vscode
