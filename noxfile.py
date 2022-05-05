@@ -45,4 +45,5 @@ def tests(session: Session) -> None:
     args = session.posargs
     session.run("poetry", "install", "--no-dev", external=True)
     install_with_constraints(session, "pytest")
+    install_with_constraints(session, "faker")
     session.run("pytest", *args)
