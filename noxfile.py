@@ -1,4 +1,3 @@
-import tempfile
 from typing import Any
 import nox
 from nox.sessions import Session
@@ -10,22 +9,7 @@ temp_file_name = "temp.txt"
 import os
 
 
-# def install_with_constraints(session, *args, **kwargs) -> None:
-#     with tempfile.NamedTemporaryFile(delete=True) as requirements:
-#         session.run(
-#             "poetry",
-#             "export",
-#             "--dev",
-#             "--format=requirements.txt",
-#             "--without-hashes",
-#             f"--output={requirements.name}",
-#             external=True,
-#         )
-#         session.install(f"--constraint={requirements.name}", *args, **kwargs)
-#     # session.install(f"--constraint=temp.txt", *args, **kwargs)
-
-
-def install_with_constraints(session, *args, **kwargs) -> None:
+def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> None:
     session.run(
         "poetry",
         "export",
@@ -37,7 +21,6 @@ def install_with_constraints(session, *args, **kwargs) -> None:
     )
     session.install(f"--constraint={temp_file_name}", *args, **kwargs)
     os.unlink(temp_file_name)
-    # session.install(f"--constraint=temp.txt", *args, **kwargs)
 
 
 @nox.session(python="3.9")
@@ -63,9 +46,3 @@ def tests(session: Session) -> None:
     session.run("poetry", "install", "--no-dev", external=True)
     install_with_constraints(session, "pytest")
     session.run("pytest", *args)
-
-
-# @nox.session(python="3.9")
-# def tests(session):
-#     session.run("poetry", "install", external=True)
-#     session.run("pytest")
