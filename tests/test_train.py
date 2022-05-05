@@ -7,6 +7,7 @@ from joblib import load
 import numpy as np
 from forest_ml.pipeline import create_pipeline
 
+
 @pytest.fixture
 def runner() -> CliRunner:
     """Fixture providing click runner."""
@@ -134,33 +135,28 @@ def test_error_use_boruta(
     assert result.exit_code == expected_output[0]
     assert expected_output[1] in result.output
 
+
 def test_valid_scenario(runner: CliRunner):
     with runner.isolated_filesystem():
         fake_data = generate_fake_data(100)
-        fake_data.to_csv('train.csv', index=False)
-    
+        fake_data.to_csv("train.csv", index=False)
+
         result = runner.invoke(
-            train,
-            [
-                "--dataset-path",
-                'train.csv',
-                "--save-model-path",
-                'model.joblib'
-            ]
+            train, ["--dataset-path", "train.csv", "--save-model-path", "model.joblib"]
         )
-        
-        model = load('model.joblib')
-        assert hasattr(model, 'predict')
-        assert hasattr(model, 'predict_proba')
-        
-        test_raws = generate_fake_data(50).drop(['Id', 'Cover_Type'], axis=1)
+
+        model = load("model.joblib")
+        assert hasattr(model, "predict")
+        assert hasattr(model, "predict_proba")
+
+        test_raws = generate_fake_data(50).drop(["Id", "Cover_Type"], axis=1)
         pipeline = create_pipeline(use_scaler=True, use_boruta=False)
         test_raws = pipeline.fit_transform(test_raws)
-        
+
         assert np.all(model.predict_proba(test_raws) >= 0)
         assert np.all(model.predict_proba(test_raws) <= 1)
-        
+
         assert np.all(model.predict(test_raws) >= 1)
         assert np.all(model.predict(test_raws) <= 7)
-    
-        assert result.exit_code == 0							
+
+        assert result.exit_code == 0

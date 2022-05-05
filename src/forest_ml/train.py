@@ -61,16 +61,8 @@ def train(
         pipeline = create_pipeline(use_scaler=use_scaler, use_boruta=use_boruta)
         features = pipeline.fit_transform(features)
 
-        accuracy = nestedCV(
+        accuracy, micro_averaged_f1, macro_averaged_f1 = nestedCV(
             model_name, features, target, random_state, scoring="accuracy"
-        )
-
-        micro_averaged_f1 = nestedCV(
-            model_name, features, target, random_state, scoring="f1_micro"
-        )
-
-        macro_averaged_f1 = nestedCV(
-            model_name, features, target, random_state, scoring="f1_macro"
         )
 
         mlflow.log_metric("accuracy", accuracy)

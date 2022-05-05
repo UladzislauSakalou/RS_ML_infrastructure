@@ -1,12 +1,14 @@
+from pathlib import Path
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import KFold, cross_val_score, GridSearchCV
+from sklearn.model_selection import KFold, cross_validate, GridSearchCV
 import mlflow
 from typing import Any
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from joblib import dump
 import click
+from typing import Tuple
 
 
 def nestedCV(
@@ -17,7 +19,7 @@ def nestedCV(
     scoring: str,
     n_splits: int = 5,
     k_splits: int = 2,
-) -> float:
+) -> Tuple[float, float, float]:
     cv_inner = KFold(n_splits=k_splits, shuffle=True, random_state=4)
     model = get_model(model_name, random_state)
     param_grid = get_param_grid(model_name)
@@ -25,10 +27,19 @@ def nestedCV(
         model, param_grid, scoring=scoring, n_jobs=-1, cv=cv_inner, refit=True
     )
     cv_outer = KFold(n_splits=n_splits, shuffle=True, random_state=4)
-    scores = cross_val_score(
-        search, features, target, scoring=scoring, cv=cv_outer, n_jobs=-1
+    scores = cross_validate(
+        search,
+        features,
+        target,
+        scoring=["accuracy", "f1_micro", "f1_macro"],
+        cv=cv_outer,
+        n_jobs=-1,
     )
-    return np.mean(scores)
+    return (
+        np.mean(scores["test_accuracy"]),
+        np.mean(scores["test_f1_micro"]),
+        np.mean(scores["test_f1_macro"]),
+    )
 
 
 def get_tuned_model(
@@ -71,6 +82,6 @@ def get_param_grid(model_name: str):
     return param_grid
 
 
-def save_model(model: Any, save_model_path: str) -> None:
+def save_model(model: Any, save_model_path: Path) -> None:
     dump(model, save_model_path)
     click.echo(f"Model is saved to {save_model_path}.")
