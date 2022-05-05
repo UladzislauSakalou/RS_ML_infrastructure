@@ -2,7 +2,7 @@ name: TestLint
 on: push
 jobs:
   testlint:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v1
