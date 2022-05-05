@@ -36,6 +36,11 @@ module = [
     "sklearn.*",
     "boruta.*",
     "joblib.*",
-    "mlflow.*"
+    "mlflow.*",
+    "faker.*",
+    "numpy.*",
+    "click.*",
+    "pytest.*",
+    "nox.*"
 ]
 ignore_missing_imports = true
