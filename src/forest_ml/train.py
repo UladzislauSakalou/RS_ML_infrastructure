@@ -54,7 +54,7 @@ def train(
     random_state: int,
     use_scaler: bool,
     use_boruta: bool,
-):
+) -> None:
     features, target = get_dataset(dataset_path)
 
     with mlflow.start_run():
