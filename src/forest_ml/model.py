@@ -9,6 +9,11 @@ from sklearn.linear_model import LogisticRegression
 from joblib import dump
 import click
 from typing import Tuple
+import json
+
+
+with open("config.json") as json_data_file:
+    config = json.load(json_data_file)
 
 
 def nestedCV(
@@ -17,16 +22,14 @@ def nestedCV(
     target: pd.Series,
     random_state: int,
     scoring: str,
-    n_splits: int = 5,
-    k_splits: int = 2,
 ) -> Tuple[float, float, float]:
-    cv_inner = KFold(n_splits=k_splits, shuffle=True, random_state=4)
+    cv_inner = KFold(n_splits=config["k_splits"], shuffle=True, random_state=4)
     model = get_model(model_name, random_state)
     param_grid = get_param_grid(model_name)
     search = GridSearchCV(
         model, param_grid, scoring=scoring, n_jobs=-1, cv=cv_inner, refit=True
     )
-    cv_outer = KFold(n_splits=n_splits, shuffle=True, random_state=4)
+    cv_outer = KFold(n_splits=config["n_splits"], shuffle=True, random_state=4)
     scores = cross_validate(
         search,
         features,
@@ -48,9 +51,8 @@ def get_tuned_model(
     target: pd.Series,
     random_state: int,
     scoring: str = "accuracy",
-    n_splits: int = 5,
 ) -> Any:
-    k_fold = KFold(n_splits=n_splits, shuffle=True, random_state=42)
+    k_fold = KFold(n_splits=config["n_splits"], shuffle=True, random_state=42)
     model = get_model(model_name, random_state)
     param_grid = get_param_grid(model_name)
     search = GridSearchCV(
@@ -73,7 +75,7 @@ def get_param_grid(model_name: str) -> dict[str, Any]:
     if model_name == "rf":
         param_grid["n_estimators"] = [100, 200]
         param_grid["criterion"] = ["gini", "entropy"]
-        param_grid["max_depth"] = [None, 5, 10]
+        param_grid["max_depth"] = [None, 10]
         param_grid["min_samples_split"] = [2, 4]
         param_grid["min_samples_leaf"] = [2, 4]
     elif model_name == "lr":
