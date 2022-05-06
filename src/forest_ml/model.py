@@ -2,7 +2,6 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import KFold, cross_validate, GridSearchCV
-import mlflow
 from typing import Any
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
@@ -51,7 +50,7 @@ def get_tuned_model(
     target: pd.Series,
     random_state: int,
     scoring: str = "accuracy",
-) -> Any:
+) -> Tuple[Any, Any]:
     k_fold = KFold(n_splits=config["n_splits"], shuffle=True, random_state=42)
     model = get_model(model_name, random_state)
     param_grid = get_param_grid(model_name)
@@ -59,8 +58,7 @@ def get_tuned_model(
         model, param_grid, scoring=scoring, n_jobs=-1, cv=k_fold, refit=True
     )
     search.fit(features, target)
-    mlflow.log_params(search.best_params_)
-    return search.best_estimator_
+    return search.best_estimator_, search.best_params_
 
 
 def get_model(model_name: str, random_state: int) -> Any:

@@ -4,6 +4,7 @@ from .data import get_dataset
 from .pipeline import create_pipeline
 from .model import nestedCV, get_tuned_model, save_model
 import mlflow
+from typing import Any
 
 
 @click.command()
@@ -65,16 +66,30 @@ def train(
             model_name, features, target, random_state, scoring="accuracy"
         )
 
-        mlflow.log_metric("accuracy", accuracy)
-        mlflow.log_metric("precision_macro", precision_macro)
-        mlflow.log_metric("macro_averaged_f1", macro_averaged_f1)
+        model, params = get_tuned_model(model_name, features, target, random_state)
 
-        model = get_tuned_model(model_name, features, target, random_state)
-        mlflow.log_param("use_scaler", use_scaler)
-        mlflow.log_param("use_boruta", use_boruta)
-        mlflow.log_param("model_name", model_name)
+        log_metrics(accuracy, precision_macro, macro_averaged_f1)
+        log_params(params, use_scaler, use_boruta, model_name)
+
         click.echo(f"Accuracy: {accuracy}.")
         click.echo(f"micro_averaged_f1: {precision_macro}.")
         click.echo(f"macro_averaged_f1: {macro_averaged_f1}.")
 
         save_model(model, save_model_path)
+
+
+def log_metrics(
+    accuracy: float, precision_macro: float, macro_averaged_f1: float
+) -> None:
+    mlflow.log_metric("accuracy", accuracy)
+    mlflow.log_metric("precision_macro", precision_macro)
+    mlflow.log_metric("macro_averaged_f1", macro_averaged_f1)
+
+
+def log_params(
+    params: dict[str, Any], use_scaler: bool, use_boruta: bool, model_name: str
+) -> None:
+    mlflow.log_params(params)
+    mlflow.log_param("use_scaler", use_scaler)
+    mlflow.log_param("use_boruta", use_boruta)
+    mlflow.log_param("model_name", model_name)
