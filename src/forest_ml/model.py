@@ -49,7 +49,7 @@ def get_tuned_model(
     random_state: int,
     scoring: str = "accuracy",
     n_splits: int = 5,
-):
+) -> Any:
     k_fold = KFold(n_splits=n_splits, shuffle=True, random_state=42)
     model = get_model(model_name, random_state)
     param_grid = get_param_grid(model_name)
@@ -68,7 +68,7 @@ def get_model(model_name: str, random_state: int) -> Any:
         return LogisticRegression(random_state=random_state)
 
 
-def get_param_grid(model_name: str):
+def get_param_grid(model_name: str) -> dict[str, Any]:
     param_grid: dict[str, Any] = dict()
     if model_name == "rf":
         param_grid["n_estimators"] = [100, 200]

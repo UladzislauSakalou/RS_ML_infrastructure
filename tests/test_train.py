@@ -136,7 +136,7 @@ def test_error_use_boruta(
     assert expected_output[1] in result.output
 
 
-def test_valid_scenario(runner: CliRunner):
+def test_valid_scenario(runner: CliRunner) -> None:
     with runner.isolated_filesystem():
         fake_data = generate_fake_data(100)
         fake_data.to_csv("train.csv", index=False)

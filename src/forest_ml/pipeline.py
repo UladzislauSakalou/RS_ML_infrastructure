@@ -32,7 +32,7 @@ def create_pipeline(use_scaler: bool, use_boruta: bool) -> Pipeline:
     return Pipeline(steps=pipeline_steps)
 
 
-def get_num_columns():
+def get_num_columns() -> list[str]:
     return [
         "Elevation",
         "Aspect",
