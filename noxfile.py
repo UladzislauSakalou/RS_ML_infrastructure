@@ -1,12 +1,11 @@
 from typing import Any
 import nox
 from nox.sessions import Session
+import os
 
-
-nox.options.sessions = "black", "mypy", "tests"
+nox.options.sessions = "flake8", "black", "mypy", "tests"
 locations = "src", "tests", "noxfile.py"
 temp_file_name = "temp.txt"
-import os
 
 
 def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> None:
@@ -21,6 +20,14 @@ def install_with_constraints(session: Session, *args: str, **kwargs: Any) -> Non
     )
     session.install(f"--constraint={temp_file_name}", *args, **kwargs)
     os.unlink(temp_file_name)
+
+
+@nox.session(python="3.9")
+def flake8(session: Session) -> None:
+    """Run flake8 code linter."""
+    args = session.posargs or locations
+    install_with_constraints(session, "flake8")
+    session.run("flake8", *args)
 
 
 @nox.session(python="3.9")
