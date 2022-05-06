@@ -31,13 +31,13 @@ def nestedCV(
         search,
         features,
         target,
-        scoring=["accuracy", "f1_micro", "f1_macro"],
+        scoring=["accuracy", "precision_macro", "f1_macro"],
         cv=cv_outer,
         n_jobs=-1,
     )
     return (
         np.mean(scores["test_accuracy"]),
-        np.mean(scores["test_f1_micro"]),
+        np.mean(scores["test_precision_macro"]),
         np.mean(scores["test_f1_macro"]),
     )
 

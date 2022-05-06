@@ -61,12 +61,12 @@ def train(
         pipeline = create_pipeline(use_scaler=use_scaler, use_boruta=use_boruta)
         features = pipeline.fit_transform(features)
 
-        accuracy, micro_averaged_f1, macro_averaged_f1 = nestedCV(
+        accuracy, precision_macro, macro_averaged_f1 = nestedCV(
             model_name, features, target, random_state, scoring="accuracy"
         )
 
         mlflow.log_metric("accuracy", accuracy)
-        mlflow.log_metric("micro_averaged_f1", micro_averaged_f1)
+        mlflow.log_metric("precision_macro", precision_macro)
         mlflow.log_metric("macro_averaged_f1", macro_averaged_f1)
 
         model = get_tuned_model(model_name, features, target, random_state)
@@ -74,7 +74,7 @@ def train(
         mlflow.log_param("use_boruta", use_boruta)
         mlflow.log_param("model_name", model_name)
         click.echo(f"Accuracy: {accuracy}.")
-        click.echo(f"micro_averaged_f1: {micro_averaged_f1}.")
+        click.echo(f"micro_averaged_f1: {precision_macro}.")
         click.echo(f"macro_averaged_f1: {macro_averaged_f1}.")
 
         save_model(model, save_model_path)
