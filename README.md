@@ -16,7 +16,7 @@ poetry install --no-dev
 ```sh
 poetry run train -d <path to csv with data> -s <path to save trained model>
 ```
-You can configure additional options (such as model type) in the CLI. To get a full list of them, use help:
+You can configure additional options (such as model type) in the CLI. To get full list of them use help:
 ```sh
 poetry run train --help
 ```
@@ -29,7 +29,14 @@ poetry run mlflow ui
 ```sh
 poetry run eda -d <path to csv with data> -s <path to save generated report>
 ```
-
+8. Create submission files with predictions. :
+```
+poetry run predict
+```
+You can configure options in the CLI. To get full list of them use help:
+```sh
+poetry run predict --help
+```
 ## Development
 
 The code in this repository must be tested, formatted with black, and pass mypy typechecking before being commited to the repository.
