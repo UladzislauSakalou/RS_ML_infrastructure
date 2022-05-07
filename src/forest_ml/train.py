@@ -26,7 +26,6 @@ import numpy as np
     show_default=True,
 )
 @click.option(
-    "-s",
     "--save-pipeline-path",
     default="data/pipeline.joblib",
     type=click.Path(dir_okay=False, writable=True, path_type=Path),
