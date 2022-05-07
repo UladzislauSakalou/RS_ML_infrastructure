@@ -1,10 +1,11 @@
 from pathlib import Path
 import click
 from .data import get_dataset
-from .pipeline import create_pipeline
+from .pipeline import create_pipeline, save_pipeline
 from .model import nestedCV, get_tuned_model, save_model
 import mlflow
 from typing import Any
+import numpy as np
 
 
 @click.command()
@@ -25,6 +26,14 @@ from typing import Any
     show_default=True,
 )
 @click.option(
+    "-s",
+    "--save-pipeline-path",
+    default="data/pipeline.joblib",
+    type=click.Path(dir_okay=False, writable=True, path_type=Path),
+    help="Path to the pipeline to save",
+    show_default=True,
+)
+@click.option(
     "--model-name",
     default="rf",
     type=click.Choice(["rf", "lr"]),
@@ -36,7 +45,7 @@ from typing import Any
 )
 @click.option(
     "--use-scaler",
-    default=True,
+    default=False,
     type=bool,
     help="flag to use scaler for dataset",
     show_default=True,
@@ -51,6 +60,7 @@ from typing import Any
 def train(
     dataset_path: Path,
     save_model_path: Path,
+    save_pipeline_path: Path,
     model_name: str,
     random_state: int,
     use_scaler: bool,
@@ -59,8 +69,10 @@ def train(
     features, target = get_dataset(dataset_path)
 
     with mlflow.start_run():
-        pipeline = create_pipeline(use_scaler=use_scaler, use_boruta=use_boruta)
-        features = pipeline.fit_transform(features)
+        if use_boruta | use_scaler:
+            pipeline = create_pipeline(use_scaler=use_scaler, use_boruta=use_boruta)
+            features = pipeline.fit_transform(np.array(features), np.array(target))
+            save_pipeline(pipeline, save_pipeline_path)
 
         accuracy, precision_macro, macro_averaged_f1 = nestedCV(
             model_name, features, target, random_state, scoring="accuracy"
@@ -72,7 +84,7 @@ def train(
         log_params(params, use_scaler, use_boruta, model_name)
 
         click.echo(f"Accuracy: {accuracy}.")
-        click.echo(f"micro_averaged_f1: {precision_macro}.")
+        click.echo(f"precision_macro: {precision_macro}.")
         click.echo(f"macro_averaged_f1: {macro_averaged_f1}.")
 
         save_model(model, save_model_path)

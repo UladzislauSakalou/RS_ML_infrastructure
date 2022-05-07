@@ -9,6 +9,7 @@ readme = "README.md"
 [tool.poetry.scripts]
 train = "forest_ml.train:train"
 eda = "forest_ml.eda:eda"
+predict = "forest_ml.predict:predict"
 
 [tool.poetry.dependencies]
 python = "^3.9"

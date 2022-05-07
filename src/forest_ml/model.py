@@ -71,9 +71,9 @@ def get_model(model_name: str, random_state: int) -> Any:
 def get_param_grid(model_name: str) -> dict[str, Any]:
     param_grid: dict[str, Any] = dict()
     if model_name == "rf":
-        param_grid["n_estimators"] = [100, 200]
+        param_grid["n_estimators"] = [100, 200, 300]
         param_grid["criterion"] = ["gini", "entropy"]
-        param_grid["max_depth"] = [None, 10]
+        param_grid["max_depth"] = [None]
         param_grid["min_samples_split"] = [2, 4]
         param_grid["min_samples_leaf"] = [2, 4]
     elif model_name == "lr":

@@ -1,8 +1,10 @@
+from pathlib import Path
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.compose import ColumnTransformer
 from boruta import BorutaPy
+from joblib import dump
 
 
 def create_pipeline(use_scaler: bool, use_boruta: bool) -> Pipeline:
@@ -30,6 +32,10 @@ def create_pipeline(use_scaler: bool, use_boruta: bool) -> Pipeline:
             )
         )
     return Pipeline(steps=pipeline_steps)
+
+
+def save_pipeline(pipeline: Pipeline, save_pipeline_path: Path):
+    dump(pipeline, save_pipeline_path)
 
 
 def get_num_columns() -> list[str]:
