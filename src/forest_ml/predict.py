@@ -8,7 +8,6 @@ from os import path
 
 @click.command()
 @click.option(
-    "-d",
     "--model-path",
     default="data/model.joblib",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
@@ -16,7 +15,6 @@ from os import path
     show_default=True,
 )
 @click.option(
-    "-d",
     "--test-dataset-path",
     default="data/test.csv",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
@@ -24,7 +22,6 @@ from os import path
     show_default=True,
 )
 @click.option(
-    "-d",
     "--sample-submission-path",
     default="data/sampleSubmission.csv",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
@@ -32,10 +29,9 @@ from os import path
     show_default=True,
 )
 @click.option(
-    "-d",
     "--pipeline-path",
     default="data/pipeline.joblib",
-    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    type=click.Path(exists=False, dir_okay=False, path_type=Path),
     help="Path to the pipeline",
     show_default=True,
 )
